@@ -1,0 +1,78 @@
+# Criando-um-sistema-de-assist-ncia-virtual-do-zero
+import speech_recognition as sr
+import pyttsx3
+import webbrowser
+from geopy.geocoders import Nominatim
+
+# Inicializar o reconhecedor de fala
+r = sr.Recognizer()
+
+# Inicializar o mecanismo de fala
+engine = pyttsx3.init()
+
+# Definir a voz
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+
+# Função para transformar texto em áudio
+def text_to_speech(text):
+    engine.say(text)
+    engine.runAndWait()
+
+# Função para transformar fala em texto
+def speech_to_text():
+    with sr.Microphone() as source:
+        print("Diga algo...")
+        audio = r.listen(source)
+    
+    try:
+        text = r.recognize_google(audio, language='pt-BR')
+        print("Você disse: " + text)
+        return text
+    except sr.UnknownValueError:
+        print("Não foi possível entender a fala.")
+        return ""
+    except sr.RequestError:
+        print("Não foi possível se conectar ao serviço de reconhecimento de fala.")
+        return ""
+
+# Função para abrir uma pesquisa no Wikipedia
+def search_wikipedia(query):
+    url = f"https://pt.wikipedia.org/wiki/{query}"
+    webbrowser.open(url)
+
+# Função para abrir o YouTube
+def open_youtube():
+    webbrowser.open("https://www.youtube.com/")
+
+# Função para obter a localização da farmácia mais próxima
+def get_nearest_pharmacy_location(latitude, longitude):
+    geolocator = Nominatim(user_agent="assistente-virtual")
+    location = geolocator.reverse(f"{latitude}, {longitude}")
+    address = location.address
+    return address
+
+# Loop contínuo para o sistema de assistência virtual
+while True:
+    # Aguardar o comando de voz do usuário
+    text_to_speech("Diga um comando...")
+    command = speech_to_text().lower()
+
+    # Analisar o comando e acionar a função correspondente
+    if "pesquisar no wikipedia" in command:
+        search_term = command.replace("pesquisar no wikipedia", "").strip()
+        search_wikipedia(search_term)
+    elif "abrir youtube" in command:
+        open_youtube()
+    elif "localização da farmácia mais próxima" in command:
+        # Obter a localização do usuário (latitude e longitude)
+        latitude = 0.0  # Substitua com a latitude do usuário
+        longitude = 0.0  # Substitua com a longitude do usuário
+
+        # Obter a localização da farmácia mais próxima
+        pharmacy_location = get_nearest_pharmacy_location(latitude, longitude)
+        text_to_speech(f"A farmácia mais próxima está localizada em {pharmacy_location}.")
+    elif "sair" in command:
+        break
+    else:
+        text_to_speech("Comando não reconhecido. Por favor, tente novamente.")
